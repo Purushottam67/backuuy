@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 
 // MongoDB connection
 mongoose.connect(
-  "mongodb+srv://nishantwork11:QlcWdJQ7Fj4XCt5h@cluster0.fbxksaw.mongodb.net/?retryWrites=true&w=majority"
+  "mongodb+srv://pu__rush__78:pu__rush__78@cluster0.zesgfmf.mongodb.net/?retryWrites=true&w=majority"
 );
 
 // Define a MongoDB schema and model for the contact form data
