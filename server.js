@@ -1,51 +1,86 @@
 const express = require("express");
+const app = express();
+const port = 8000;
 const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
+
+const connectDB = require("./dbConnection");
+const User = require("./user");
 const cors = require("cors");
 
-const app = express();
-const PORT = 5000;
+// Middleware for parsing JSON
+app.use(express.json());
 
-// Use CORS middleware
+// Enable CORS
 app.use(cors());
 
-// Body parser middleware
-app.use(bodyParser.json());
+// Connect to MongoDB
+connectDB();
 
-// MongoDB connection
-mongoose.connect(
-  "mongodb+srv://pu__rush__78:pu__rush__78@cluster0.zesgfmf.mongodb.net/?retryWrites=true&w=majority"
-);
-
-// Define a MongoDB schema and model for the contact form data
+// Define a schema for the contact form data
 const contactSchema = new mongoose.Schema({
   name: String,
   email: String,
   message: String,
 });
 
+// Create a Contact model based on the schema
 const Contact = mongoose.model("Contact", contactSchema);
 
-// API endpoint to handle contact form submissions
+// Registration
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    console.log(req.body);
+    const user = new User({ username, password });
+    await user.save();
+    res.status(201).json({ message: "Registration Successful" });
+  } catch (error) {
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
+
+// Login
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid username or Password" });
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+    res.status(200).json({ message: "Login successful" });
+  } catch (error) {
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// Contact form
 app.post("/api/contact", async (req, res) => {
   try {
     const { name, email, message } = req.body;
 
-    // Save the form data to MongoDB
-    const newContact = new Contact({ name, email, message });
-    await newContact.save();
+    // Validate data if needed
 
-    // Respond with a success message or any necessary data
-    res
-      .status(200)
-      .json({ success: true, message: "Contact form submitted successfully!" });
+    // Save the contact form data to MongoDB
+    const contact = new Contact({ name, email, message });
+    await contact.save();
+
+    // Respond with success message
+    const successMessage = `Thank you, ${name}! Your message has been received.`;
+    res.status(200).json({ success: true, message: successMessage });
   } catch (error) {
-    console.error("Error handling contact form submission:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Error submitting contact form:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while submitting the form. Please try again.",
+    });
   }
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(port, () => {
+  console.log("Server is listening on Port 8000");
 });
